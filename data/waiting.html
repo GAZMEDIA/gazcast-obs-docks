@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GazCast</title>
+<style>
+  :root {
+    color-scheme: dark;
+    --bg: #1d1f26;
+    --panel: #272a33;
+    --border: #3c404d;
+    --text: #e6e7eb;
+    --muted: #9a9daa;
+    --accent: #476be5;
+    --accent-hover: #5a7cf0;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font: 13px/1.45 "Segoe UI", system-ui, -apple-system, "Helvetica Neue", Arial, sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+  }
+  .card {
+    width: 100%;
+    max-width: 320px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 18px 16px;
+    text-align: center;
+  }
+  h1 { font-size: 14px; font-weight: 600; margin: 0 0 6px; }
+  p { margin: 0 0 14px; color: var(--muted); }
+  a.button {
+    display: inline-block;
+    background: var(--accent);
+    color: #fff;
+    text-decoration: none;
+    font-weight: 600;
+    padding: 7px 14px;
+    border-radius: 4px;
+  }
+  a.button:hover, a.button:focus-visible { background: var(--accent-hover); outline: none; }
+  .status {
+    margin-top: 14px;
+    font-size: 12px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--muted);
+    animation: pulse 1.4s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%, 100% { opacity: .25; } 50% { opacity: 1; } }
+  @media (prefers-reduced-motion: reduce) { .dot { animation: none; } }
+</style>
+</head>
+<body>
+  <main class="card">
+    <h1>GazCast isn't running</h1>
+    <p>Start the GazCast app and this dock will connect automatically.</p>
+    <!-- target=_blank makes obs-browser hand the link to the OS (QDesktopServices),
+         which launches the app through its registered gazcast:// protocol. -->
+    <a class="button" href="gazcast://open" target="_blank" rel="noopener">Start GazCast</a>
+    <div class="status"><span class="dot" aria-hidden="true"></span><span id="status">Waiting for the app&hellip;</span></div>
+  </main>
+<script>
+(function () {
+  'use strict';
+  var DEFAULT_TARGET = 'http://127.0.0.1:5510/dock';
+  var target = DEFAULT_TARGET;
+
+  try {
+    var requested = new URLSearchParams(window.location.search).get('to');
+    if (requested) {
+      var u = new URL(requested);
+      // Only ever navigate to the local GazCast app.
+      if (u.protocol === 'http:' && (u.hostname === '127.0.0.1' || u.hostname === 'localhost')) {
+        target = u.href;
+      }
+    }
+  } catch (e) { /* keep default */ }
+
+  var health = new URL('/healthz', target).href;
+  var statusEl = document.getElementById('status');
+  var done = false;
+
+  function check() {
+    if (done) return;
+    // no-cors: we only need to know whether something answered on the port.
+    // An opaque response resolves; "connection refused" rejects.
+    fetch(health + '?t=' + Date.now(), { mode: 'no-cors', cache: 'no-store' })
+      .then(function () {
+        done = true;
+        statusEl.textContent = 'Connecting…';
+        window.location.replace(target);
+      })
+      .catch(function () {
+        setTimeout(check, 2000);
+      });
+  }
+
+  check();
+})();
+</script>
+</body>
+</html>
