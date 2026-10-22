@@ -50,8 +50,11 @@ the stream, with the same sound, but leaves out the sources you tick. Your
 stream and your normal recording still show everything.
 
 1. Turn the dock on: **Docks → GazCast Clean Record**.
-2. In its list, tick the sources to leave out. GazCast overlays are ticked for
-   you. Ticking a source adds a filter called **Hide in GazCast clean
+2. In its list, tick the sources to leave out. Every overlay is ticked for
+   you the first time the plugin sees it: browser sources (including GazCast
+   and other web overlays), images, slideshows and text. Cameras, screen and
+   window captures, media files and colour backgrounds stay in. Untick
+   anything you want to keep. Ticking a source adds a filter called **Hide in GazCast clean
    recording** to it, so you can also add or remove it from the source's
    **Filters** window. It is saved with your scene collection.
 3. Press **Start Recording** in OBS as usual. With **Start and stop together

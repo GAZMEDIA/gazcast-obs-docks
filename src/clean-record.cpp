@@ -21,8 +21,10 @@ with this program. If not, see <https://www.gnu.org/licenses/>
  *
  * How it works:
  * - Sources to leave out carry the "Hide in GazCast clean recording" filter
- *   (gazcast_clean_hide). GazCast overlays get it automatically; any other
- *   source can get it from the dock's list or from its Filters window. The
+ *   (gazcast_clean_hide). Overlay-type sources (browser, image, slideshow,
+ *   text, and GazCast's own) get it automatically the first time they are
+ *   seen; any source can be ticked or unticked in the dock's list or its
+ *   Filters window. The
  *   filter is saved with the scene collection like any other filter.
  * - While a clean recording runs, a private source (gazcast_clean_mix) renders
  *   OBS's program output (output channel 0, i.e. the transition) into its own
@@ -172,6 +174,22 @@ bool IsGazCastOverlay(obs_source_t *source)
 	return url.contains(localOverlay) || url.contains(QLatin1String("gazgoc.com.ng"), Qt::CaseInsensitive);
 }
 
+/* Graphics laid over the show: web pages, pictures, slideshows and text. Cameras,
+ * captures, media files and colour backgrounds are the show itself. */
+bool IsOverlay(obs_source_t *source)
+{
+	static const char *const kOverlayTypes[] = {"browser_source",   "image_source", "slideshow",
+						    "slideshow_v2",     "text_gdiplus", "text_ft2_source",
+						    "text_pango_source"};
+	const char *id = obs_source_get_unversioned_id(source);
+	for (const char *type : kOverlayTypes) {
+		if (strcmp(id, type) == 0) {
+			return true;
+		}
+	}
+	return IsGazCastOverlay(source);
+}
+
 /* Returns a new reference, or nullptr. */
 obs_source_t *GetHideFilter(obs_source_t *source)
 {
@@ -211,16 +229,18 @@ void SetHidden(obs_source_t *source, bool hidden)
 struct SourceRow {
 	std::string name;
 	bool gazcast;
+	bool overlay;
 	bool hidden;
 
 	bool operator==(const SourceRow &other) const
 	{
-		return name == other.name && gazcast == other.gazcast && hidden == other.hidden;
+		return name == other.name && gazcast == other.gazcast && overlay == other.overlay &&
+		       hidden == other.hidden;
 	}
 };
 
-/* Every input with video, GazCast overlays first. Also gives each GazCast
- * overlay the filter the first time it is seen. */
+/* Every input with video, overlays first. Also gives each overlay the filter
+ * the first time it is seen; after that the user's tick decides. */
 std::vector<SourceRow> ScanSources()
 {
 	/* Collect first: adding a filter creates a source, which must not happen
@@ -238,23 +258,24 @@ std::vector<SourceRow> ScanSources()
 	std::vector<SourceRow> rows;
 	for (obs_source_t *source : sources) {
 		const bool gazcast = IsGazCastOverlay(source);
-		if (gazcast) {
+		const bool overlay = gazcast || IsOverlay(source);
+		if (overlay) {
 			OBSDataAutoRelease priv = obs_source_get_private_settings(source);
 			if (!obs_data_get_bool(priv, kAutoTagged)) {
 				SetHidden(source, true);
 				obs_data_set_bool(priv, kAutoTagged, true);
-				obs_log(LOG_INFO, "clean record: leaving GazCast overlay '%s' out",
+				obs_log(LOG_INFO, "clean record: leaving overlay '%s' out",
 					obs_source_get_name(source));
 			}
 		}
 
 		const char *name = obs_source_get_name(source);
-		rows.push_back({name ? name : "", gazcast, HasHideFilter(source)});
+		rows.push_back({name ? name : "", gazcast, overlay, HasHideFilter(source)});
 	}
 
 	std::stable_sort(rows.begin(), rows.end(), [](const SourceRow &a, const SourceRow &b) {
-		if (a.gazcast != b.gazcast) {
-			return a.gazcast;
+		if (a.overlay != b.overlay) {
+			return a.overlay;
 		}
 		return QString::fromStdString(a.name).compare(QString::fromStdString(b.name), Qt::CaseInsensitive) < 0;
 	});
@@ -627,8 +648,10 @@ void RefreshList()
 	g_ui.list->clear();
 	for (const SourceRow &row : rows) {
 		QString label = QString::fromStdString(row.name);
-		if (row.gazcast) {
-			label += QStringLiteral("  ") + QString::fromUtf8(obs_module_text("GazCast.Clean.OverlayTag"));
+		if (row.overlay) {
+			label += QStringLiteral("  ") +
+				 QString::fromUtf8(obs_module_text(row.gazcast ? "GazCast.Clean.GazCastTag"
+									       : "GazCast.Clean.OverlayTag"));
 		}
 		auto *item = new QListWidgetItem(label, g_ui.list);
 		item->setData(Qt::UserRole, QString::fromStdString(row.name));
