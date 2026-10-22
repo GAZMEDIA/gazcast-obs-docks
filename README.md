@@ -8,6 +8,10 @@ A small, free OBS Studio plugin that adds two docks to OBS showing pages from th
 | GazCast         | `gazcast-list`    | `http://127.0.0.1:5510/dock`          |
 | GazCast Control | `gazcast-control` | `http://127.0.0.1:5510/dock/control`  |
 
+It also adds a third dock, **GazCast Clean Record**, that records a second,
+"clean" copy of your show without the overlays (see below). This dock is plain
+OBS and works without the app.
+
 It also adds two entries to OBS's **Tools** menu:
 
 - **GazCast: open app**: launches GazCast through its `gazcast://open` link.
@@ -38,6 +42,37 @@ To uninstall, delete `C:\ProgramData\obs-studio\plugins\gazcast-docks`.
 Without the plugin, you can add the same pages yourself under
 **Docks → Custom Browser Docks**: `http://127.0.0.1:5510/dock` and
 `http://127.0.0.1:5510/dock/control`.
+
+## Clean recording (no overlays)
+
+The **GazCast Clean Record** dock records the same program output OBS sends to
+the stream, with the same sound, but leaves out the sources you tick. Your
+stream and your normal recording still show everything.
+
+1. Turn the dock on: **Docks → GazCast Clean Record**.
+2. In its list, tick the sources to leave out. Every overlay is ticked for
+   you the first time the plugin sees it: browser sources (including GazCast
+   and other web overlays), images, slideshows and text. Cameras, screen and
+   window captures, media files and colour backgrounds stay in. Untick
+   anything you want to keep. Ticking a source adds a filter called **Hide in GazCast clean
+   recording** to it, so you can also add or remove it from the source's
+   **Filters** window. It is saved with your scene collection.
+3. Press **Start Recording** in OBS as usual. With **Start and stop together
+   with OBS's Start Recording button** ticked (the default), the clean copy
+   starts and stops with it and is saved next to your recording as
+   `<recording name> (clean).mkv` (or `.mp4` if you record MP4). You can also
+   use the dock's own **Start clean recording** button; that file is called
+   `GazCast clean <date> <time>`.
+
+The clean copy uses the same video encoder and settings as your normal
+recording (or the first hardware encoder it finds, then x264), so it costs
+about as much as a second recording. MP4 files are written fragmented so they
+survive a crash.
+
+Known limit: OBS draws a few things once per frame and reuses them. An overlay
+still shows in the clean copy if it sits inside a scene item that is cropped,
+has a scale filter or a blending mode set, and during the second or so a scene
+transition runs. The stream is never affected.
 
 ## Building
 
