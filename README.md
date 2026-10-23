@@ -22,18 +22,22 @@ the template's macOS and Linux build paths are kept and should also work.
 
 ## Install (Windows)
 
-1. Download the plugin: https://overlays.gazgoc.com.ng/download/obs (or the zip
-   from this repo's Releases).
+1. Download **gazcast-docks-setup.exe**:
+   https://github.com/GAZMEDIA/gazcast-obs-docks/releases/latest/download/gazcast-docks-setup.exe
 2. Close OBS.
-3. Unzip it and copy the `gazcast-docks` folder to
-   `C:\ProgramData\obs-studio\plugins\`.
+3. Double-click the file. If Windows says "Windows protected your PC", click
+   **More info**, then **Run anyway**. Click **Yes** when Windows asks to allow
+   changes, then **Next** and **Install**.
 4. Start OBS and turn the docks on from **Docks → GazCast** and
    **Docks → GazCast Control**. OBS remembers where you put them.
 
 You also need the GazCast desktop app (free 14-day trial):
 https://gazgoc.com.ng/gazcast/
 
-To uninstall, delete `C:\ProgramData\obs-studio\plugins\gazcast-docks`.
+To uninstall, use **Settings → Apps → GazCast docks for OBS Studio**.
+
+The installer copies the plugin to `C:\ProgramData\obs-studio\plugins\gazcast-docks`.
+Each release also has a `.zip` of that folder for copying by hand.
 
 Without the plugin, you can add the same pages yourself under
 **Docks → Custom Browser Docks**: `http://127.0.0.1:5510/dock` and
@@ -42,8 +46,10 @@ Without the plugin, you can add the same pages yourself under
 ## Building
 
 Push to this repo (or run the workflow by hand) and GitHub Actions builds the
-Windows plugin with the obs-plugintemplate scripts in `.github/scripts`; each
-build is saved as a release.
+Windows plugin with the obs-plugintemplate scripts in `.github/scripts`, then
+the setup .exe with Inno Setup (`installer/gazcast-docks.iss`). Each build is
+saved as a release: builds of `main` are full releases, other branches make test
+prereleases.
 
 ## Reporting problems
 
