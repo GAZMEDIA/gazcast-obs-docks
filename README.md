@@ -8,10 +8,6 @@ A small, free OBS Studio plugin that adds two docks to OBS showing pages from th
 | GazCast         | `gazcast-list`    | `http://127.0.0.1:5510/dock`          |
 | GazCast Control | `gazcast-control` | `http://127.0.0.1:5510/dock/control`  |
 
-It also adds a third dock, **GazCast Clean Record**, that records a second,
-"clean" copy of your show without the overlays (see below). This dock is plain
-OBS and works without the app.
-
 It also adds two entries to OBS's **Tools** menu:
 
 - **GazCast: open app**: launches GazCast through its `gazcast://open` link.
@@ -26,59 +22,34 @@ the template's macOS and Linux build paths are kept and should also work.
 
 ## Install (Windows)
 
-1. Download the plugin: https://overlays.gazgoc.com.ng/download/obs (or the zip
-   from this repo's Releases).
+1. Download **gazcast-docks-setup.exe**:
+   https://github.com/GAZMEDIA/gazcast-obs-docks/releases/latest/download/gazcast-docks-setup.exe
 2. Close OBS.
-3. Unzip it and copy the `gazcast-docks` folder to
-   `C:\ProgramData\obs-studio\plugins\`.
+3. Double-click the file. If Windows says "Windows protected your PC", click
+   **More info**, then **Run anyway**. Click **Yes** when Windows asks to allow
+   changes, then **Next** and **Install**.
 4. Start OBS and turn the docks on from **Docks → GazCast** and
    **Docks → GazCast Control**. OBS remembers where you put them.
 
 You also need the GazCast desktop app (free 14-day trial):
 https://gazgoc.com.ng/gazcast/
 
-To uninstall, delete `C:\ProgramData\obs-studio\plugins\gazcast-docks`.
+To uninstall, use **Settings → Apps → GazCast docks for OBS Studio**.
+
+The installer copies the plugin to `C:\ProgramData\obs-studio\plugins\gazcast-docks`.
+Each release also has a `.zip` of that folder for copying by hand.
 
 Without the plugin, you can add the same pages yourself under
 **Docks → Custom Browser Docks**: `http://127.0.0.1:5510/dock` and
 `http://127.0.0.1:5510/dock/control`.
 
-## Clean recording (no overlays)
-
-The **GazCast Clean Record** dock records the same program output OBS sends to
-the stream, with the same sound, but leaves out the sources you tick. Your
-stream and your normal recording still show everything.
-
-1. Turn the dock on: **Docks → GazCast Clean Record**.
-2. In its list, tick the sources to leave out. Every overlay is ticked for
-   you the first time the plugin sees it: browser sources (including GazCast
-   and other web overlays), images, slideshows and text. Cameras, screen and
-   window captures, media files and colour backgrounds stay in. Untick
-   anything you want to keep. Ticking a source adds a filter called **Hide in GazCast clean
-   recording** to it, so you can also add or remove it from the source's
-   **Filters** window. It is saved with your scene collection.
-3. Press **Start Recording** in OBS as usual. With **Start and stop together
-   with OBS's Start Recording button** ticked (the default), the clean copy
-   starts and stops with it and is saved next to your recording as
-   `<recording name> (clean).mkv` (or `.mp4` if you record MP4). You can also
-   use the dock's own **Start clean recording** button; that file is called
-   `GazCast clean <date> <time>`.
-
-The clean copy uses the same video encoder and settings as your normal
-recording (or the first hardware encoder it finds, then x264), so it costs
-about as much as a second recording. MP4 files are written fragmented so they
-survive a crash.
-
-Known limit: OBS draws a few things once per frame and reuses them. An overlay
-still shows in the clean copy if it sits inside a scene item that is cropped,
-has a scale filter or a blending mode set, and during the second or so a scene
-transition runs. The stream is never affected.
-
 ## Building
 
 Push to this repo (or run the workflow by hand) and GitHub Actions builds the
-Windows plugin with the obs-plugintemplate scripts in `.github/scripts`; each
-build is saved as a release.
+Windows plugin with the obs-plugintemplate scripts in `.github/scripts`, then
+the setup .exe with Inno Setup (`installer/gazcast-docks.iss`). Each build is
+saved as a release: builds of `main` are full releases, other branches make test
+prereleases.
 
 ## Reporting problems
 

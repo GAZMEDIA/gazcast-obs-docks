@@ -31,7 +31,6 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 #include <plugin-support.h>
 
-#include "clean-record.hpp"
 #include "obs-browser/browser-panel.hpp"
 
 #include <QDesktopServices>
@@ -57,7 +56,7 @@ MODULE_EXPORT const char *obs_module_name(void)
 
 MODULE_EXPORT const char *obs_module_description(void)
 {
-	return "Docks for the GazCast desktop app (overlay list and control panel), plus a clean recording without overlays.";
+	return "Docks for the GazCast desktop app (overlay list and control panel).";
 }
 
 namespace {
@@ -327,8 +326,6 @@ void Shutdown()
 	}
 	g_shuttingDown = true;
 
-	CleanRecordShutdown();
-
 	if (g_initTimer) {
 		g_initTimer->stop();
 		delete g_initTimer;
@@ -358,9 +355,6 @@ void Shutdown()
 
 void OnFrontendEvent(enum obs_frontend_event event, void *)
 {
-	if (!g_shuttingDown) {
-		CleanRecordFrontendEvent(event);
-	}
 	if (event == OBS_FRONTEND_EVENT_EXIT) {
 		Shutdown();
 	}
@@ -372,7 +366,6 @@ void OnFrontendEvent(enum obs_frontend_event event, void *)
 
 bool obs_module_load(void)
 {
-	CleanRecordRegisterTypes();
 	obs_log(LOG_INFO, "plugin loaded (version %s)", PLUGIN_VERSION);
 	return true;
 }
@@ -389,7 +382,6 @@ void obs_module_post_load(void)
 	}
 
 	CreateDockContainers();
-	CleanRecordCreateDock();
 
 	obs_frontend_add_tools_menu_item(obs_module_text("GazCast.Menu.OpenApp"), [](void *) { OpenApp(); }, nullptr);
 	obs_frontend_add_tools_menu_item(

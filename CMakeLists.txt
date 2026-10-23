@@ -42,10 +42,7 @@ endif()
 # browser-panel.hpp is obs-browser's public panel interface (vendored, see the
 # file header). It declares a Q_OBJECT class, so it is listed as a source to let
 # AUTOMOC process it, exactly like OBS's own frontend does via OBS::browser-panels.
-target_sources(
-  ${CMAKE_PROJECT_NAME}
-  PRIVATE src/plugin-main.cpp src/clean-record.cpp src/clean-record.hpp src/obs-browser/browser-panel.hpp
-)
+target_sources(${CMAKE_PROJECT_NAME} PRIVATE src/plugin-main.cpp src/obs-browser/browser-panel.hpp)
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
 
 if(OS_LINUX)

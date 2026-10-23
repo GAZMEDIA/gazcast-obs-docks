@@ -59,7 +59,28 @@ jobs:
           foreach ($Path in @("$Root/bin/64bit/$Name.dll", "$Root/data/waiting.html", "$Root/data/locale/en-US.ini")) {
             if (-not (Test-Path $Path)) { throw "Missing $Path" }
           }
+          # a dll without the plugin's code still builds; it is only a few KB
+          $Dll = Get-Item "$Root/bin/64bit/$Name.dll"
+          if ($Dll.Length -lt 40KB) { throw "$Name.dll is only $($Dll.Length) bytes; the plugin code is missing" }
           Get-ChildItem -Recurse "release/$env:BUILD_CONFIG" | Select-Object FullName, Length | Format-Table -AutoSize
+
+      # One setup .exe that copies the plugin to
+      # C:\ProgramData\obs-studio\plugins\gazcast-docks (installer/gazcast-docks.iss).
+      # Inno Setup 6 comes with the windows-2022 runner image.
+      - name: Build installer
+        run: |
+          $Name = '${{ steps.setup.outputs.pluginName }}'
+          $Version = '${{ steps.setup.outputs.pluginVersion }}'
+          $Iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $Iscc)) {
+            choco install innosetup --no-progress -y
+            if ($LASTEXITCODE -ne 0) { throw "Could not install Inno Setup" }
+          }
+          & $Iscc "/DAppVersion=$Version" "/DSourceDir=$PWD\release\$env:BUILD_CONFIG\$Name" "/DOutputDir=$PWD\release" installer\gazcast-docks.iss
+          if ($LASTEXITCODE -ne 0) { throw "ISCC failed" }
+          # the same file under a fixed name, for a download link that never changes
+          Copy-Item "release/$Name-$Version-windows-x64-setup.exe" "release/$Name-setup.exe"
+          Get-Item release/*.exe | Select-Object Name, Length | Format-Table -AutoSize
 
       # Artifact contents (GitHub zips it on download):
       #   RelWithDebInfo/gazcast-docks/bin/64bit/gazcast-docks.dll (+ .pdb)
@@ -73,14 +94,28 @@ jobs:
           path: |
             release/${{ env.BUILD_CONFIG }}/
             release/${{ steps.setup.outputs.pluginName }}-${{ steps.setup.outputs.pluginVersion }}-windows-x64.zip
+            release/${{ steps.setup.outputs.pluginName }}-${{ steps.setup.outputs.pluginVersion }}-windows-x64-setup.exe
           if-no-files-found: error
           retention-days: 7
 
+      # Builds of main are full releases, so
+      # https://github.com/GAZMEDIA/gazcast-obs-docks/releases/latest/download/gazcast-docks-setup.exe
+      # always gets the newest one. Other branches make test prereleases.
       - name: Save the plugin as a release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: gazcast-docks-${{ github.run_number }}
-          name: GazCast OBS docks test build ${{ github.run_number }} 
+          name: ${{ github.ref == 'refs/heads/main' && format('GazCast OBS docks {0}', steps.setup.outputs.pluginVersion) || format('GazCast OBS docks test build {0}', github.run_number) }}
           target_commitish: ${{ github.sha }}
-          prerelease: true
-          files: release/${{ steps.setup.outputs.pluginName }}-${{ steps.setup.outputs.pluginVersion }}-windows-x64.zip
+          prerelease: ${{ github.ref != 'refs/heads/main' }}
+          body: |
+            **Easiest:** download `${{ steps.setup.outputs.pluginName }}-setup.exe`, close OBS, double-click it and follow the steps.
+            If Windows says "Windows protected your PC", click **More info**, then **Run anyway**.
+
+            Then open OBS, click **Docks** at the top and tick **GazCast** and **GazCast Control**.
+
+            The `.zip` is the same plugin for copying by hand into `C:\ProgramData\obs-studio\plugins\`.
+          files: |
+            release/${{ steps.setup.outputs.pluginName }}-setup.exe
+            release/${{ steps.setup.outputs.pluginName }}-${{ steps.setup.outputs.pluginVersion }}-windows-x64-setup.exe
+            release/${{ steps.setup.outputs.pluginName }}-${{ steps.setup.outputs.pluginVersion }}-windows-x64.zip
