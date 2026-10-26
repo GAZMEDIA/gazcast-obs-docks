@@ -13,6 +13,11 @@ It also adds two entries to OBS's **Tools** menu:
 - **GazCast: open app**: launches GazCast through its `gazcast://open` link.
 - **GazCast: reload docks**: re-reads the config and reloads both docks.
 
+It also connects OBS to the app directly, so the app's **OBS** page can put
+overlays into your scenes (as browser sources) and take them out again. There is
+no OBS WebSocket to switch on and no password: see
+[How the app reaches OBS](#how-the-app-reaches-obs).
+
 The plugin is only a shell. It shows what the app serves, and every feature
 (including licensing) lives in the GazCast app. Without the app, the docks just
 show a "start the app" page.
@@ -54,6 +59,16 @@ prereleases.
 ## Reporting problems
 
 Open an issue: https://github.com/GAZMEDIA/gazcast-obs-docks/issues
+
+## How the app reaches OBS
+
+About once a second the plugin sends `POST http://127.0.0.1:<port>/api/obs/check-in`
+with OBS's scene names, the current scene and its browser sources (name and
+address), plus the results of jobs it has finished. The app answers with new
+jobs: add one of its overlay pages (`http://127.0.0.1:<port>/o/...`, nothing
+else) to a scene as a browser source fitted to the canvas, or remove a browser
+source. If the app isn't running, the check-in fails quietly and is tried again.
+The code is in `src/obs-link.cpp`.
 
 ## How the docks find the app
 

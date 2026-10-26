@@ -27,8 +27,8 @@ if(ENABLE_FRONTEND_API)
 endif()
 
 if(ENABLE_QT)
-  find_package(Qt6 REQUIRED COMPONENTS Widgets Core)
-  target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Qt6::Core Qt6::Widgets)
+  find_package(Qt6 REQUIRED COMPONENTS Widgets Core Network)
+  target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Qt6::Core Qt6::Widgets Qt6::Network)
   target_compile_options(
     ${CMAKE_PROJECT_NAME}
     PRIVATE $<$<C_COMPILER_ID:Clang,AppleClang>:-Wno-quoted-include-in-framework-header -Wno-comma>
@@ -42,7 +42,7 @@ endif()
 # browser-panel.hpp is obs-browser's public panel interface (vendored, see the
 # file header). It declares a Q_OBJECT class, so it is listed as a source to let
 # AUTOMOC process it, exactly like OBS's own frontend does via OBS::browser-panels.
-target_sources(${CMAKE_PROJECT_NAME} PRIVATE src/plugin-main.cpp src/obs-browser/browser-panel.hpp)
+target_sources(${CMAKE_PROJECT_NAME} PRIVATE src/plugin-main.cpp src/obs-link.cpp src/obs-browser/browser-panel.hpp)
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/src")
 
 if(OS_LINUX)
