@@ -18,7 +18,8 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 
 /*
  * A thin shell: two OBS docks that show pages served by the GazCast desktop
- * app on http://127.0.0.1:<port>. All product logic lives in the app.
+ * app on http://127.0.0.1:<port>, plus the direct link that lets the app put
+ * overlays into OBS (obs-link.cpp). All product logic lives in the app.
  *
  * Browser widgets come from obs-browser's panel API (browser-panel.hpp), the
  * same API OBS itself uses for "Custom Browser Docks".
@@ -32,6 +33,7 @@ with this program. If not, see <https://www.gnu.org/licenses/>
 #include <plugin-support.h>
 
 #include "obs-browser/browser-panel.hpp"
+#include "obs-link.hpp"
 
 #include <QDesktopServices>
 #include <QLabel>
@@ -299,6 +301,7 @@ void ReloadDocks()
 {
 	g_port = LoadPort();
 	obs_log(LOG_INFO, "reloading docks (port %d)", g_port);
+	ObsLinkSetPort(g_port);
 
 	for (Dock &dock : g_docks) {
 		if (dock.browser) {
@@ -325,6 +328,8 @@ void Shutdown()
 		return;
 	}
 	g_shuttingDown = true;
+
+	ObsLinkStop();
 
 	if (g_initTimer) {
 		g_initTimer->stop();
@@ -390,6 +395,7 @@ void obs_module_post_load(void)
 	obs_frontend_add_event_callback(OnFrontendEvent, nullptr);
 
 	StartBrowserWhenReady();
+	ObsLinkStart(g_port);
 
 	obs_log(LOG_INFO, "docks ready, app expected on http://127.0.0.1:%d", g_port);
 }
